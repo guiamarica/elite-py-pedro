@@ -5,47 +5,9 @@ import { INITIAL_PLACES, UI_TRANSLATIONS } from './constants';
 
 // --- Configuration ---
 const PASSWORD_CORRECT = "1234";
-const STORAGE_KEY = 'elite_py_places_v6';
+const STORAGE_KEY = 'elite_py_places_v5'; // Final migration key
 
-// --- Sub-Components ---
-
-const WeatherWidget = memo(({ lang }: { lang: Language }) => {
-  const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
-
-  useEffect(() => {
-    // Premium mock for Asunción weather
-    const conditions = {
-      es: 'Soleado',
-      en: 'Sunny',
-      pt: 'Ensolarado'
-    };
-    
-    // Simulate discrete data loading
-    const timer = setTimeout(() => {
-      setWeather({ temp: 31, condition: conditions[lang] });
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [lang]);
-
-  if (!weather) return (
-    <div className="h-12 w-36 animate-pulse bg-white/5 rounded-full border border-white/10"></div>
-  );
-
-  return (
-    <div className="flex items-center gap-4 bg-white/5 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 animate-in fade-in slide-in-from-left duration-1000 shadow-2xl">
-      <div className="flex flex-col items-end">
-        <span className="text-[7px] font-bold text-amber-500 uppercase tracking-[0.3em]">Asunción</span>
-        <span className="text-[10px] font-mono text-zinc-300 font-bold tracking-tight">{weather.temp}°C {weather.condition}</span>
-      </div>
-      <div className="w-7 h-7 flex items-center justify-center text-amber-500 bg-amber-500/10 rounded-full border border-amber-500/20">
-        <svg fill="currentColor" viewBox="0 0 24 24" className="w-4 h-4">
-          <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-2c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1s-1 .45-1 1v1c0 .55.45 1 1 1zm0 14c-.55 0-1 .45-1 1v1c0 .55.45 1 1 1s1-.45 1-1v-1c0-.55-.45-1-1-1zm7.07-12.07c-.39-.39-1.02-.39-1.41 0l-.71.71c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.71-.71c.39-.39.39-1.02 0-1.41zm-14.14 14.14c.39.39 1.02.39 1.41 0l.71-.71c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-.71.71c-.39.39-.39 1.02 0 1.41zM2 12c0 .55.45 1 1 1h1c.55 0 1-.45 1-1s-.45-1-1-1H3c-.55 0-1 .45-1 1zm17 0c0 .55.45 1 1 1h1c.55 0 1-.45 1-1s-.45-1-1-1h-1c-.55 0-1 .45-1 1zM7.05 5.64c.39-.39.39-1.02 0-1.41l-.71-.71c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l.71.71c.39.39 1.02.39 1.41 0zm11.31 11.31c-.39.39-.39 1.02 0 1.41l.71.71c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-.71-.71c-.39-.39-1.02-.39-1.41 0z"/>
-        </svg>
-      </div>
-    </div>
-  );
-});
+// --- Components ---
 
 const Notification = ({ message, type, onClose }: { message: string, type: 'success' | 'error', onClose: () => void }) => {
   useEffect(() => {
@@ -116,6 +78,7 @@ const PlaceCard = memo(({ place, lang, onDetail, isAdmin, onEdit, onDelete }: {
             className="w-full h-full object-cover grayscale-[0.4] group-hover:grayscale-0 transition-all duration-1000 animate-in fade-in"
           />
           
+          {/* DISCRETE CARD NAVIGATION */}
           {images.length > 1 && (
             <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-3 opacity-0 group-hover:opacity-100 transition-all duration-500 z-10 pointer-events-none">
               <button onClick={handlePrev} className="p-2.5 rounded-full bg-black/40 text-white/40 hover:bg-white hover:text-black backdrop-blur-xl transition-all border border-white/5 active:scale-90 pointer-events-auto">
@@ -487,6 +450,7 @@ export default function App() {
     if (!saved) return INITIAL_PLACES;
     try {
       const parsed = JSON.parse(saved);
+      // Migration check: force update if count doesn't match initial high-quality set
       if (parsed.length < INITIAL_PLACES.length) return INITIAL_PLACES;
       return parsed;
     } catch {
@@ -566,15 +530,12 @@ export default function App() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/95 to-[#050505]"></div>
         <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-20">
           <div className="text-center md:text-left animate-in fade-in slide-in-from-bottom-10 duration-1000">
-            <div className="flex items-center gap-6 mb-8 justify-center md:justify-start">
-               <WeatherWidget lang={lang} />
-               {isAdmin && (
-                  <div className="inline-flex items-center gap-3 px-4 py-2 bg-amber-500/10 text-amber-500 text-[10px] font-bold tracking-[0.5em] uppercase rounded-full border border-amber-500/20 backdrop-blur-md">
-                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                    Console Administrator
-                  </div>
-               )}
-            </div>
+            {isAdmin && (
+               <div className="inline-flex items-center gap-3 px-4 py-2 bg-amber-500/10 text-amber-500 text-[10px] font-bold tracking-[0.5em] uppercase rounded-full mb-8 border border-amber-500/20 backdrop-blur-md">
+                 <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                 Console Administrator
+               </div>
+            )}
             <h1 className="text-8xl sm:text-[180px] font-bold tracking-tighter text-white mb-8 leading-[0.8] select-none">ELITE<br/>PY</h1>
             <p className="text-amber-500 text-sm md:text-2xl font-light tracking-[0.6em] uppercase serif ml-3 opacity-90">{ui.subtitle}</p>
           </div>
