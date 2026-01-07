@@ -27,19 +27,21 @@ const WeatherWidget = memo(({ lang }: { lang: Language }) => {
   ], []);
 
   useEffect(() => {
-    // Alterna a cidade a cada 8 segundos
     const interval = setInterval(() => {
       setCityIndex((prev) => (prev + 1) % cities.length);
     }, 8000);
-    
-    const currentCity = cities[cityIndex];
-    setWeather({ 
-      temp: currentCity.temp, 
-      condition: currentCity.conditions[lang],
-      name: currentCity.name
-    });
-
     return () => clearInterval(interval);
+  }, [cities.length]);
+
+  useEffect(() => {
+    const currentCity = cities[cityIndex];
+    if (currentCity) {
+      setWeather({ 
+        temp: currentCity.temp, 
+        condition: currentCity.conditions[lang] || currentCity.conditions['es'],
+        name: currentCity.name
+      });
+    }
   }, [lang, cityIndex, cities]);
 
   if (!weather) return (
@@ -101,7 +103,7 @@ const PlaceCard = memo(({ place, lang, onDetail, isAdmin, onEdit, onDelete }: {
   onDelete: (id: string) => void
 }) => {
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
-  const t = place.translations[lang];
+  const t = place.translations[lang] || place.translations['es'];
   const ui = UI_TRANSLATIONS[lang];
   const images = place.images || [];
 
@@ -130,7 +132,6 @@ const PlaceCard = memo(({ place, lang, onDetail, isAdmin, onEdit, onDelete }: {
             className="w-full h-full object-cover grayscale-[0.4] group-hover:grayscale-0 transition-all duration-1000 animate-in fade-in"
           />
           
-          {/* DISCRETE CARD NAVIGATION */}
           {images.length > 1 && (
             <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-3 opacity-0 group-hover:opacity-100 transition-all duration-500 z-10 pointer-events-none">
               <button onClick={handlePrev} className="p-2.5 rounded-full bg-black/40 text-white/40 hover:bg-white hover:text-black backdrop-blur-xl transition-all border border-white/5 active:scale-90 pointer-events-auto">
@@ -334,9 +335,9 @@ const PlaceEditorModal = ({ place, lang, onSave, onClose }: {
                   <h4 className="text-[9px] font-bold text-amber-500 uppercase tracking-[0.6em] mb-4 flex items-center justify-center gap-3">
                     <span className="w-2 h-[1px] bg-amber-500/30"></span> {l} <span className="w-2 h-[1px] bg-amber-500/30"></span>
                   </h4>
-                  <input placeholder="Nombre" type="text" value={formData.translations[l].name} onChange={e => handleTransChange(l, 'name', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none"/>
-                  <textarea placeholder="Descripción Larga" rows={6} value={formData.translations[l].description} onChange={e => handleTransChange(l, 'description', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none resize-none flex-grow"/>
-                  <input placeholder="Dirección / Local" type="text" value={formData.translations[l].address} onChange={e => handleTransChange(l, 'address', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none"/>
+                  <input placeholder="Nombre" type="text" value={formData.translations[l]?.name || ''} onChange={e => handleTransChange(l, 'name', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none"/>
+                  <textarea placeholder="Descripción Larga" rows={6} value={formData.translations[l]?.description || ''} onChange={e => handleTransChange(l, 'description', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none resize-none flex-grow"/>
+                  <input placeholder="Dirección / Local" type="text" value={formData.translations[l]?.address || ''} onChange={e => handleTransChange(l, 'address', e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-white focus:border-amber-500 outline-none"/>
                 </div>
               ))}
             </div>
@@ -368,7 +369,7 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
   }, [place]);
 
   if (!place) return null;
-  const t = place.translations[lang];
+  const t = place.translations[lang] || place.translations['es'];
   const ui = UI_TRANSLATIONS[lang];
   const images = place.images || [];
 
@@ -386,7 +387,6 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
       className="fixed inset-0 z-[200] flex items-center justify-center p-0 sm:p-4 bg-black/98 backdrop-blur-md animate-in fade-in duration-700"
       onClick={onClose}
     >
-      {/* FIXED CLOSE X */}
       <button 
         onClick={(e) => { e.stopPropagation(); onClose(); }} 
         className="fixed top-6 right-6 z-[250] bg-black/40 text-white p-4 rounded-full hover:bg-white hover:text-black transition-all backdrop-blur-xl border border-white/10 shadow-2xl active:scale-90 flex items-center justify-center group"
@@ -401,7 +401,6 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
         className="bg-[#0c0c0c] border-x sm:border border-zinc-800/50 w-full max-w-3xl sm:rounded-[2.5rem] h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto shadow-[0_0_150px_rgba(0,0,0,1)] animate-in zoom-in slide-in-from-bottom-10 duration-500 relative scroll-smooth no-scrollbar"
         onClick={e => e.stopPropagation()}
       >
-        {/* IMAGE GALLERY */}
         <div className="relative h-[45vh] sm:h-[550px] bg-zinc-900 overflow-hidden group/gallery">
           <img 
             key={imgIdx}
@@ -411,7 +410,6 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c] via-transparent to-black/20"></div>
 
-          {/* DISCRETE NAVIGATION ARROWS */}
           {images.length > 1 && (
             <>
               <button onClick={prevImg} className="absolute left-6 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 hover:bg-black/60 text-white transition-all backdrop-blur-sm opacity-0 group-hover/gallery:opacity-100 border border-white/5 active:scale-90">
@@ -420,7 +418,6 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
               <button onClick={nextImg} className="absolute right-6 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 hover:bg-black/60 text-white transition-all backdrop-blur-sm opacity-0 group-hover/gallery:opacity-100 border border-white/5 active:scale-90">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
-              {/* IMAGE INDICATORS */}
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3">
                 {images.map((_, i) => (
                   <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === imgIdx ? 'bg-amber-500 w-8' : 'bg-white/20'}`}></div>
@@ -473,7 +470,6 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
             </div>
           </div>
 
-          {/* MINIMALIST SIGNATURE BACK BUTTON */}
           <div className="pt-12 border-t border-zinc-900/60 flex justify-center">
             <button 
               onClick={onClose}
@@ -497,18 +493,19 @@ const DetailModal = memo(({ place, lang, onClose }: { place: Place | null, lang:
 export default function App() {
   const [lang, setLang] = useState<Language>('es');
   const [activeCategory, setActiveCategory] = useState<Category | 'all'>('all');
+  
   const [places, setPlaces] = useState<Place[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return INITIAL_PLACES;
     try {
       const parsed = JSON.parse(saved);
-      // Migration check: force update if count doesn't match initial high-quality set
-      if (parsed.length < INITIAL_PLACES.length) return INITIAL_PLACES;
+      if (!Array.isArray(parsed) || parsed.length < INITIAL_PLACES.length) return INITIAL_PLACES;
       return parsed;
     } catch {
       return INITIAL_PLACES;
     }
   });
+
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -568,6 +565,19 @@ export default function App() {
     }
   }, [lang]);
 
+  const exportData = useCallback(() => {
+    const dataStr = JSON.stringify(places, null, 2);
+    navigator.clipboard.writeText(dataStr).then(() => {
+      setNotification({ 
+        msg: lang === 'pt' ? "JSON copiado! Envie para o desenvolvedor." : "¡JSON copiado! Envíalo al desarrollador.", 
+        type: 'success' 
+      });
+    }).catch(() => {
+      console.log(dataStr);
+      alert(lang === 'pt' ? "Erro ao copiar. O JSON foi impresso no console (F12)." : "Error al copiar. El JSON fue impreso en la consola (F12).");
+    });
+  }, [places, lang]);
+
   const filteredPlaces = useMemo(() => {
     if (activeCategory === 'all') return places;
     return places.filter(p => p.category === activeCategory);
@@ -577,7 +587,6 @@ export default function App() {
     <div className="min-h-screen pb-20 bg-[#050505] text-zinc-100 selection:bg-amber-500/30 antialiased overflow-x-hidden">
       {notification && <Notification message={notification.msg} type={notification.type} onClose={() => setNotification(null)} />}
       
-      {/* Header */}
       <header className="relative py-48 sm:py-64 px-6 overflow-hidden border-b border-zinc-900 bg-[url('https://images.unsplash.com/photo-1549415653-f7256561f008?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-fixed bg-center">
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/95 to-[#050505]"></div>
         <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-20">
@@ -606,7 +615,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Navigation / Filter */}
       <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-2xl border-b border-zinc-900/50 shadow-2xl">
         <nav className="max-w-7xl mx-auto px-6 py-8 flex flex-col lg:flex-row justify-between items-center gap-10">
           <ul className="flex flex-wrap items-center justify-center lg:justify-start gap-x-12 gap-y-4 py-2 w-full lg:w-auto">
@@ -631,18 +639,27 @@ export default function App() {
           </ul>
           
           {isAdmin && (
-            <button 
-              onClick={() => setEditingPlace({})}
-              className="bg-white text-black px-10 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.4em] transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:bg-amber-500 active:scale-95 flex items-center gap-3 w-full lg:w-auto justify-center"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-              {ui.labels.addPlace}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+              <button 
+                onClick={exportData}
+                className="bg-zinc-800 text-amber-500 px-8 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.4em] transition-all border border-amber-500/20 hover:bg-zinc-700 active:scale-95 flex items-center justify-center gap-3"
+                title="Copia os dados para me enviar e eu tornar permanentes"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16a2 2 0 012-2h4a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                {lang === 'pt' ? 'Exportar JSON' : 'Exportar Datos'}
+              </button>
+              <button 
+                onClick={() => setEditingPlace({})}
+                className="bg-white text-black px-10 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.4em] transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:bg-amber-500 active:scale-95 flex items-center gap-3 justify-center"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                {ui.labels.addPlace}
+              </button>
+            </div>
           )}
         </nav>
       </div>
 
-      {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-32">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
           {filteredPlaces.map((place) => (
@@ -665,7 +682,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="mt-48 py-48 px-6 border-t border-zinc-950 bg-black text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')] opacity-10"></div>
         <div className="relative z-10">
@@ -684,7 +700,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Modals */}
       <DetailModal 
         place={selectedPlace} 
         lang={lang} 
