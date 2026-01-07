@@ -10,23 +10,37 @@ const STORAGE_KEY = 'elite_py_places_v6';
 // --- Components ---
 
 const WeatherWidget = memo(({ lang }: { lang: Language }) => {
-  const [weather, setWeather] = useState<{ temp: number; condition: string } | null>(null);
+  const [cityIndex, setCityIndex] = useState(0);
+  const [weather, setWeather] = useState<{ temp: number; condition: string; name: string } | null>(null);
+
+  const cities = useMemo(() => [
+    { 
+      name: 'Asunción', 
+      temp: 31, 
+      conditions: { es: 'Soleado', en: 'Sunny', pt: 'Ensolarado' } 
+    },
+    { 
+      name: 'Ciudad del Este', 
+      temp: 29, 
+      conditions: { es: 'Parcialmente Nublado', en: 'Partly Cloudy', pt: 'Parcialmente Nublado' } 
+    }
+  ], []);
 
   useEffect(() => {
-    // Premium mock for Asunción weather
-    const conditions = {
-      es: 'Soleado',
-      en: 'Sunny',
-      pt: 'Ensolarado'
-    };
+    // Alterna a cidade a cada 8 segundos
+    const interval = setInterval(() => {
+      setCityIndex((prev) => (prev + 1) % cities.length);
+    }, 8000);
     
-    // Simulate discrete data loading
-    const timer = setTimeout(() => {
-      setWeather({ temp: 31, condition: conditions[lang] });
-    }, 800);
+    const currentCity = cities[cityIndex];
+    setWeather({ 
+      temp: currentCity.temp, 
+      condition: currentCity.conditions[lang],
+      name: currentCity.name
+    });
 
-    return () => clearTimeout(timer);
-  }, [lang]);
+    return () => clearInterval(interval);
+  }, [lang, cityIndex, cities]);
 
   if (!weather) return (
     <div className="h-12 w-36 animate-pulse bg-white/5 rounded-full border border-white/10"></div>
@@ -35,7 +49,7 @@ const WeatherWidget = memo(({ lang }: { lang: Language }) => {
   return (
     <div className="flex items-center gap-4 bg-white/5 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 animate-in fade-in slide-in-from-left duration-1000 shadow-2xl">
       <div className="flex flex-col items-end">
-        <span className="text-[7px] font-bold text-amber-500 uppercase tracking-[0.3em]">Asunción</span>
+        <span className="text-[7px] font-bold text-amber-500 uppercase tracking-[0.3em] transition-all duration-500">{weather.name}</span>
         <span className="text-[10px] font-mono text-zinc-300 font-bold tracking-tight">{weather.temp}°C {weather.condition}</span>
       </div>
       <div className="w-7 h-7 flex items-center justify-center text-amber-500 bg-amber-500/10 rounded-full border border-amber-500/20">
